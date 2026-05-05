@@ -70,6 +70,7 @@ export default function App() {
   const [isAccessDenied, setIsAccessDenied] = useState(false);
   const [picnicToken, setPicnicToken] = useState<string | null>(localStorage.getItem('picnicToken'));
   const [picnicEmail, setPicnicEmail] = useState<string | null>(localStorage.getItem('picnicEmail'));
+  const [picnicCountry, setPicnicCountry] = useState<string>(localStorage.getItem('picnicCountry') || 'DE');
   const [favourites, setFavourites] = useState<PicnicProduct[]>([]);
   const [items, setItems] = useState<ShoppingListItem[]>([]);
   const [newItemName, setNewItemName] = useState('');
@@ -190,10 +191,13 @@ export default function App() {
     if (!user || loading || isAccessDenied || !currentUserRole) return;
     const unsub = onSnapshot(doc(db, 'config', 'picnic'), (docSnap) => {
       if (docSnap.exists() && docSnap.data().picnicToken) {
-        setPicnicToken(docSnap.data().picnicToken);
-        setPicnicEmail(docSnap.data().email || null);
-        localStorage.setItem('picnicToken', docSnap.data().picnicToken);
-        if (docSnap.data().email) localStorage.setItem('picnicEmail', docSnap.data().email);
+        const data = docSnap.data();
+        setPicnicToken(data.picnicToken);
+        setPicnicEmail(data.email || null);
+        setPicnicCountry(data.country || 'DE');
+        localStorage.setItem('picnicToken', data.picnicToken);
+        if (data.email) localStorage.setItem('picnicEmail', data.email);
+        localStorage.setItem('picnicCountry', data.country || 'DE');
       } else {
         setPicnicToken(null);
         setPicnicEmail(null);
@@ -250,7 +254,7 @@ export default function App() {
     if (!picnicToken) return;
     setRefreshing(true);
     try {
-      const data = await picnicApi.getFavourites(picnicToken);
+      const data = await picnicApi.getFavourites(picnicToken, picnicCountry);
       if (Array.isArray(data)) {
         setFavourites(data as PicnicProduct[]);
       }
@@ -758,7 +762,7 @@ export default function App() {
     
     for (const item of matchedItems) {
       try {
-        await picnicApi.addToBasket(picnicToken, item.matchedProduct!.id, item.count);
+        await picnicApi.addToBasket(picnicToken, item.matchedProduct!.id, item.count, picnicCountry);
         // Remove item after success
         try {
           await deleteDoc(doc(db, 'items', item.id));
@@ -1318,15 +1322,18 @@ export default function App() {
         <PicnicSettings 
           picnicToken={picnicToken}
           picnicEmail={picnicEmail}
+          picnicCountry={picnicCountry}
           onClose={() => setShowSettings(false)}
-          onConnected={async (token, userEmail) => {
+          onConnected={async (token, userEmail, country) => {
             setPicnicToken(token);
             setPicnicEmail(userEmail);
+            setPicnicCountry(country);
             try {
               // Write to shared config so all users get the token
               await setDoc(doc(db, 'config', 'picnic'), { 
                 picnicToken: token,
-                email: userEmail
+                email: userEmail,
+                country: country
               }, { merge: true });
             } catch (e) {
               console.error("Failed to share Picnic connection", e);
@@ -1357,6 +1364,7 @@ export default function App() {
         <ManualSearchModal 
           item={manualSearchItem}
           token={picnicToken || ''}
+          country={picnicCountry}
           onClose={() => setManualSearchItem(null)}
           onSelect={(product) => {
             updateMatch(manualSearchItem, product);
@@ -1483,9 +1491,10 @@ function CandidateSelectionModal({ item, onClose, onSelect, onManualSearch }: {
   );
 }
 
-function ManualSearchModal({ item, token, onClose, onSelect }: { 
+function ManualSearchModal({ item, token, country, onClose, onSelect }: { 
   item: ShoppingListItem, 
   token: string, 
+  country: string,
   onClose: () => void, 
   onSelect: (product: PicnicProduct) => void 
 }) {
@@ -1501,7 +1510,7 @@ function ManualSearchModal({ item, token, onClose, onSelect }: {
     if (!query.trim()) return;
     setLoading(true);
     try {
-      const data = await picnicApi.search(token, query);
+      const data = await picnicApi.search(token, query, country);
       setResults(data);
     } catch (e) {
       console.error("Search failed", e);
@@ -1597,15 +1606,17 @@ function ManualSearchModal({ item, token, onClose, onSelect }: {
   );
 }
 
-function PicnicSettings({ picnicToken, picnicEmail, onClose, onConnected, onDisconnect }: { 
+function PicnicSettings({ picnicToken, picnicEmail, picnicCountry, onClose, onConnected, onDisconnect }: { 
   picnicToken: string | null,
   picnicEmail: string | null,
+  picnicCountry: string,
   onClose: () => void, 
-  onConnected: (token: string, email: string) => void,
+  onConnected: (token: string, email: string, country: string) => void,
   onDisconnect: () => void
 }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [country, setCountry] = useState('DE');
   const [mfaCode, setMfaCode] = useState('');
   const [step, setStep] = useState<'login' | 'mfa'>('login');
   const [tempToken, setTempToken] = useState('');
@@ -1617,12 +1628,12 @@ function PicnicSettings({ picnicToken, picnicEmail, onClose, onConnected, onDisc
     setLoading(true);
     setError('');
     try {
-      const data = await picnicApi.login(email, password);
+      const data = await picnicApi.login(email, password, country);
       if (data.secondFactorRequired) {
         setTempToken(data.token);
         setStep('mfa');
       } else {
-        onConnected(data.token, email);
+        onConnected(data.token, email, country);
         onClose();
       }
     } catch (e: any) {
@@ -1637,7 +1648,7 @@ function PicnicSettings({ picnicToken, picnicEmail, onClose, onConnected, onDisc
     setLoading(true);
     setError('');
     try {
-      await picnicApi.requestMfaCode(tempToken);
+      await picnicApi.requestMfaCode(tempToken, country);
     } catch (e: any) {
       setError("Failed to request MFA code. Please try again.");
     } finally {
@@ -1650,8 +1661,8 @@ function PicnicSettings({ picnicToken, picnicEmail, onClose, onConnected, onDisc
     setLoading(true);
     setError('');
     try {
-      const data = await picnicApi.verifyMfaCode(tempToken, mfaCode);
-      onConnected(data.token, email);
+      const data = await picnicApi.verifyMfaCode(tempToken, mfaCode, country);
+      onConnected(data.token, email, country);
       onClose();
     } catch (e: any) {
       setError("Invalid 2FA code. Please check and try again.");
@@ -1701,11 +1712,16 @@ function PicnicSettings({ picnicToken, picnicEmail, onClose, onConnected, onDisc
           {picnicToken ? (
             <div className="space-y-6">
               <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-600">
+                <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-600 relative">
                   <Check className="w-6 h-6" />
+                  {picnicCountry && (
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center text-xs shadow-sm border border-slate-100">
+                      {picnicCountry === 'DE' ? '🇩🇪' : picnicCountry === 'NL' ? '🇳🇱' : '🇫🇷'}
+                    </div>
+                  )}
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-slate-900">Connected to Picnic</div>
+                  <div className="text-sm font-bold text-slate-900">Connected to Picnic ({picnicCountry})</div>
                   {picnicEmail && (
                     <div className="text-xs text-slate-500 font-medium">{picnicEmail}</div>
                   )}
@@ -1726,6 +1742,31 @@ function PicnicSettings({ picnicToken, picnicEmail, onClose, onConnected, onDisc
           ) : step === 'login' ? (
             <form onSubmit={submitLogin} className="space-y-5">
               <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Country</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'DE', name: 'Germany', flag: '🇩🇪' },
+                      { id: 'NL', name: 'Netherlands', flag: '🇳🇱' },
+                      { id: 'FR', name: 'France', flag: '🇫🇷' }
+                    ].map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setCountry(c.id)}
+                        className={cn(
+                          "py-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1",
+                          country === c.id 
+                            ? "bg-rose-50 border-rose-200 text-rose-600 shadow-sm" 
+                            : "bg-slate-50 border-slate-100 text-slate-400 hover:bg-white hover:border-slate-200"
+                        )}
+                      >
+                        <span className="text-lg">{c.flag}</span>
+                        {c.id}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Email address</label>
                   <input 

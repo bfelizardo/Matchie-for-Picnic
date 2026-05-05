@@ -11,9 +11,9 @@ const PORT = 3000;
 app.use(express.json());
 
 // Helper to get a Picnic client with the user's token
-const getPicnicClient = (token?: string) => {
+const getPicnicClient = (token?: string, country?: string) => {
   return new PicnicClient({
-    countryCode: "DE",
+    countryCode: (country || "DE") as any,
     apiVersion: "17", // Using 17 as it seems to be the latest version the user was trying
     authKey: token || undefined,
   });
@@ -22,11 +22,13 @@ const getPicnicClient = (token?: string) => {
 // Picnic Login
 app.post("/api/picnic/login", async (req, res) => {
   const { email, password } = req.body;
+  const country = req.headers["x-picnic-country"] as string;
+
   if (!email || !password) {
     return res.status(400).json({ error: { message: "Email and password are required" } });
   }
 
-  const picnic = getPicnicClient();
+  const picnic = getPicnicClient(undefined, country);
   try {
     const loginResult = await picnic.auth.login(email.trim(), password);
     
@@ -49,7 +51,8 @@ app.post("/api/picnic/login", async (req, res) => {
 // Request MFA Code
 app.post("/api/picnic/mfa/request", async (req, res) => {
   const token = req.headers["x-picnic-auth"] as string;
-  const picnic = getPicnicClient(token);
+  const country = req.headers["x-picnic-country"] as string;
+  const picnic = getPicnicClient(token, country);
   try {
     await picnic.auth.generate2FACode("SMS");
     res.json({ success: true });
@@ -63,11 +66,12 @@ app.post("/api/picnic/mfa/request", async (req, res) => {
 app.post("/api/picnic/mfa/verify", async (req, res) => {
   const { code } = req.body;
   const token = req.headers["x-picnic-auth"] as string;
-  const picnic = getPicnicClient(token);
+  const country = req.headers["x-picnic-country"] as string;
+  const picnic = getPicnicClient(token, country);
   try {
     const result = await picnic.auth.verify2FACode(code);
     // After verification, we need to refresh the client to get the new user details
-    const updatedPicnic = getPicnicClient(result.authKey);
+    const updatedPicnic = getPicnicClient(result.authKey, country);
     const userDetails = await updatedPicnic.user.getUserDetails();
     
     res.json({ token: result.authKey, user: userDetails });
@@ -80,7 +84,8 @@ app.post("/api/picnic/mfa/verify", async (req, res) => {
 // Get favorites
 app.get("/api/picnic/favorites", async (req, res) => {
   const token = req.headers["x-picnic-auth"] as string;
-  const picnic = getPicnicClient(token);
+  const country = req.headers["x-picnic-country"] as string;
+  const picnic = getPicnicClient(token, country);
   try {
     // Try to find valid page IDs from bootstrap first
     let dynamicEndpoints: string[] = [];
@@ -210,7 +215,8 @@ app.get("/api/picnic/favorites", async (req, res) => {
 app.get("/api/picnic/search", async (req, res) => {
   const { term } = req.query;
   const token = req.headers["x-picnic-auth"] as string;
-  const picnic = getPicnicClient(token);
+  const country = req.headers["x-picnic-country"] as string;
+  const picnic = getPicnicClient(token, country);
   try {
     const results = await picnic.catalog.search(term as string);
     // Map SellingUnit to PicnicProduct interface and deduplicate
@@ -244,7 +250,8 @@ app.get("/api/picnic/search", async (req, res) => {
 app.post("/api/picnic/basket/add", async (req, res) => {
   const { product_id, count } = req.body;
   const token = req.headers["x-picnic-auth"] as string;
-  const picnic = getPicnicClient(token);
+  const country = req.headers["x-picnic-country"] as string;
+  const picnic = getPicnicClient(token, country);
   try {
     const result = await picnic.cart.addProductToCart(product_id, count || 1);
     res.json(result);

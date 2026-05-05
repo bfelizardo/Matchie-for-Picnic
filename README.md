@@ -2,17 +2,16 @@
 
 Picnic Shopping Helper is an AI-powered shopping assistant specifically designed for families and shared households. It bridges the gap between your natural language shopping list and the Picnic grocery delivery service, ensuring that everyone in your home can contribute to a single, intelligent list without the guesswork.
 
-> [!NOTE]
-> **Tested with German Picnic API 🇩🇪**  
-> This app was just testet with a German Picnic account. It might work in other countries.  
-> Let me know if it also works in your country!
+> [!TIP]
+> **Multi-Country Support**  
+> Matchie supports Picnic accounts in **Germany (🇩🇪)**, the **Netherlands (🇳🇱)**, and **France (🇫🇷)**. Select your region during the setup process to sync the correct catalogue.
 
 ## ✨ Key Features
 
 - **Natural Language Shopping List**: Just type what you need (e.g., "Bananas", "Bread", "Oat Milk"). No need to search for every specific product manually.
 - **AI-Powered Product Matching**: Uses Google Gemini to semantically match your list items to your Picnic favourites and catalogue.
 - **Personalised Memory**: The AI learns from your corrections. If you manually pick a specific brand for "milk", the system remembers it and applies it automatically next time.
-- **Direct Picnic Sync**: Connect your Picnic account to pull your favourite products and sync your completed list directly to your Picnic basket.
+- **Direct Picnic Sync**: Connect your Picnic account (DE, NL, or FR) to pull your favourite products and sync your completed list directly to your Picnic basket.
 - **Collective Household Shopping**: Built on Firebase, allowing family members or roommates to manage and view the shopping list together in real-time. Stop guessing what is in the fridge—let everyone add their missing items as they run out.
 - **Household Management Centre**: An administrative interface where the first user (Admin) can manage account access and configure the shared Picnic connection.
 
