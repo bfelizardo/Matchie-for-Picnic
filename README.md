@@ -2,6 +2,11 @@
 
 Picnic Shopping Helper is an AI-powered shopping assistant specifically designed for families and shared households. It bridges the gap between your natural language shopping list and the Picnic grocery delivery service, ensuring that everyone in your home can contribute to a single, intelligent list without the guesswork.
 
+> [!NOTE]
+> **Tested with German Picnic API 🇩🇪**  
+> This app was just testet with a German Picnic account. It might work in other countries.  
+> Let me know if it also works in your country!
+
 ## ✨ Key Features
 
 - **Natural Language Shopping List**: Just type what you need (e.g., "Bananas", "Bread", "Oat Milk"). No need to search for every specific product manually.
