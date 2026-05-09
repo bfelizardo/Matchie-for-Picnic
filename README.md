@@ -68,16 +68,54 @@ This app follows a "First-In, Admin" architectural pattern designed for private 
     VITE_FIREBASE_STORAGE_BUCKET=...
     VITE_FIREBASE_MESSAGING_SENDER_ID=...
     VITE_FIREBASE_APP_ID=...
+    VITE_FIREBASE_DATABASE_ID=(default)
     ```
 
 4.  **Firebase Configuration**:
-    The app uses environment variables for Firebase initialization. You can find these values in your Firebase Console under Project Settings > General > Your apps. Add them to your `.env` file as shown above.
+    - The app uses environment variables for Firebase initialization. You can find these values in your Firebase Console under Project Settings > General > Your apps. Add them to your `.env` file as shown above.
+    - **Authorized Domains**: To enable Google Login in production, you MUST add your deployment domain (e.g., `ais-pre-....run.app` or `yourdomain.com`) to the **Authorized Domains** list in the Firebase Console under **Authentication > Settings > Authorized domains**. 
+      > **Important**: If the domain is not authorized, OAuth operations (like `signInWithPopup` or `signInWithRedirect`) will fail with an error. Adding your domain to the authorized domains list ensures these methods work correctly.
 
 5.  **Run the application**:
     ```bash
     npm run dev
     ```
     The app will be available at `http://localhost:3000`.
+
+## 🌐 Production Deployment
+
+For a stable production environment on your own server (e.g., Ubuntu VPS), it is highly recommended to use a process manager like **PM2**.
+
+### 1. Install PM2 Globally
+Yes, installing PM2 globally allows it to manage and monitor processes across your entire system.
+```bash
+sudo npm install -g pm2
+```
+
+### 2. Build for Production
+First, generate the optimized frontend assets:
+```bash
+npm run build
+```
+
+### 3. Start with PM2
+Launch the server using PM2. This will ensure your app automatically restarts if it crashes or if the server reboots.
+```bash
+pm2 start npm --name "matchie" -- start
+```
+
+### 4. Monitor & Logs
+- **Check status**: `pm2 status`
+- **View logs**: `pm2 logs matchie`
+- **Restart**: `pm2 restart matchie`
+- **Stop**: `pm2 stop matchie`
+
+### 5. (Optional) Run on Startup
+To make PM2 start your app automatically after a server reboot:
+```bash
+pm2 startup
+pm2 save
+```
 
 ## 🧠 How it Works
 

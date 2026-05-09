@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="128" fill="#F43F5E"/>
+  <!-- Shopping Basket -->
+  <path d="M140 200H372L345 420H167L140 200Z" fill="white" fill-opacity="0.2"/>
+  <path d="M180 200V150C180 110 205 80 256 80C307 80 332 110 332 150V200" stroke="white" stroke-width="24" stroke-linecap="round"/>
+  <rect x="130" y="200" width="252" height="40" rx="10" fill="white"/>
+  <!-- Checkmark inside the basket area -->
+  <path d="M230 310L250 330L290 290" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- AI Sparkle -->
+  <path d="M380 100L385 120L405 125L385 130L380 150L375 130L355 125L375 120L380 100Z" fill="white" fill-opacity="0.8"/>
+</svg>

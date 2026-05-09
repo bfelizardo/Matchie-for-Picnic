@@ -52,6 +52,21 @@ export function UserManagement({ currentUserEmail, onClose }: { currentUserEmail
     }
   };
 
+  const handleToggleRole = async (email: string, currentRole: string) => {
+    if (email === currentUserEmail) {
+      alert("You cannot change your own role to prevent accidental lockout.");
+      return;
+    }
+    const newRole = currentRole === 'admin' ? 'member' : 'admin';
+    if (confirm(`Change ${email} to ${newRole}?`)) {
+      try {
+        await setDoc(doc(db, 'app_users', email), { role: newRole }, { merge: true });
+      } catch (e) {
+        handleFirestoreError(e, OperationType.UPDATE, `app_users/${email}`);
+      }
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <motion.div 
@@ -151,12 +166,16 @@ export function UserManagement({ currentUserEmail, onClose }: { currentUserEmail
                           </div>
                         </div>
                         <div className="flex items-center justify-between xs:justify-end gap-3 self-stretch xs:self-auto border-t xs:border-t-0 pt-3 xs:pt-0 border-slate-50">
-                          <span className={cn(
-                            "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border",
-                            u.role === 'admin' ? "bg-rose-50 border-rose-100 text-rose-600" : "bg-slate-100 border-slate-200 text-slate-500"
-                          )}>
+                          <button
+                            onClick={() => handleToggleRole(u.email, u.role)}
+                            className={cn(
+                              "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all active:scale-95 cursor-pointer",
+                              u.role === 'admin' ? "bg-rose-50 border-rose-100 text-rose-600 hover:bg-rose-100" : "bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200"
+                            )}
+                            title={u.role === 'admin' ? "Demote to Member" : "Promote to Admin"}
+                          >
                             {u.role}
-                          </span>
+                          </button>
                           
                           {u.role !== 'admin' && (
                             <button 

@@ -156,19 +156,27 @@ export default function App() {
       try {
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-          setCurrentUserRole(userSnap.data().role);
+          let role = userSnap.data().role;
+          // User requested Bruno to be the primary account holder
+          if (email === 'bruno.felizardoantunes@gmail.com' && role !== 'admin') {
+            await updateDoc(userRef, { role: 'admin' });
+            role = 'admin';
+          }
+          setCurrentUserRole(role);
           setIsAccessDenied(false);
         } else {
-          // Check if bootstrapping is needed
+          // Check if bootstrapping is needed or if this is the requested special admin
           const setupSnap = await getDoc(setupRef);
-          if (!setupSnap.exists()) {
+          if (!setupSnap.exists() || email === 'bruno.felizardoantunes@gmail.com') {
             await setDoc(userRef, {
               email,
               role: 'admin',
               addedAt: serverTimestamp(),
               addedBy: 'system_bootstrap'
             });
-            await setDoc(setupRef, { setupComplete: true });
+            if (!setupSnap.exists()) {
+              await setDoc(setupRef, { setupComplete: true });
+            }
             setCurrentUserRole('admin');
             setIsAccessDenied(false);
           } else {
@@ -787,8 +795,8 @@ export default function App() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-4">
         <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-10 text-center border border-slate-200">
-          <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <ShoppingBasket className="w-8 h-8 text-rose-600" />
+          <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-6 overflow-hidden">
+            <img src="/logo.svg" className="w-full h-full object-cover" alt="Matchie Logo" />
           </div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight">Matchie</h1>
           <p className="text-slate-500 mb-8 leading-relaxed">The intelligent shopping list that learns your favourites.</p>
@@ -886,12 +894,12 @@ export default function App() {
       {/* Top Navigation */}
       <nav className="h-16 lg:h-20 bg-white border-b border-slate-200 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-[100] backdrop-blur-sm bg-white/90">
         <div className="flex items-center gap-2 lg:gap-3">
-          <div className="w-8 h-8 lg:w-10 lg:h-10 bg-rose-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-rose-200">
-            <ShoppingBasket className="w-5 h-5" />
+          <div className="w-8 h-8 lg:w-10 lg:h-10 bg-rose-600 rounded-xl flex items-center justify-center overflow-hidden shadow-lg shadow-rose-200">
+            <img src="/logo.svg" className="w-full h-full object-cover" alt="Matchie Logo" />
           </div>
           <div className="flex flex-col">
             <span className="text-base lg:text-lg font-bold tracking-tight leading-tight">Matchie</span>
-            <span className="hidden sm:inline text-[9px] font-bold text-rose-500 uppercase tracking-widest -mt-0.5">Picnic Helper</span>
+            <span className="hidden sm:inline text-[9px] font-bold text-rose-500 uppercase tracking-widest -mt-0.5">Picnic Shopping Helper</span>
           </div>
         </div>
         
