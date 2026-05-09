@@ -18,6 +18,7 @@ jobs:
       - name: Connect to Tailscale
         uses: tailscale/github-action@v3
         with:
+          tailnet: ${{ secrets.TS_TAILNET_NAME }} 
           tags: tag:ci
 
       - name: Deploy via SSH
