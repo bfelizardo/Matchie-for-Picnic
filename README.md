@@ -1,139 +1,199 @@
-# Picnic Shopping Helper for Families and Shared Households 🛍️🤖
+# Picnic Shopping Helper (Matchie) 🛍️🤖
 
-Picnic Shopping Helper is an AI-powered shopping assistant specifically designed for families and shared households. It bridges the gap between your natural language shopping list and the Picnic grocery delivery service, ensuring that everyone in your home can contribute to a single, intelligent list without the guesswork.
+**Picnic Shopping Helper** is an AI-powered shopping assistant specifically designed for families and shared households (housemates). It bridges the gap between your natural language shopping list and the Picnic grocery delivery service, ensuring that everyone in your home can contribute to a single, intelligent list without the guesswork.
 
 > [!TIP]
-> **Multi-Country Support**  
-> Matchie supports Picnic accounts in **Germany (🇩🇪)**, the **Netherlands (🇳🇱)**, and **France (🇫🇷)**. Select your region during the setup process to sync the correct catalogue.
+> **Multi-Country Support** > Matchie supports Picnic accounts in **Germany (🇩🇪)**, the **Netherlands (🇳🇱)**, and **France (🇫🇷)**. Select your region during the setup process to sync the correct catalogue.
+
+---
 
 ## ✨ Key Features
 
-- **Natural Language Shopping List**: Just type what you need (e.g., "Bananas", "Bread", "Oat Milk"). No need to search for every specific product manually.
-- **AI-Powered Product Matching**: Uses Google Gemini to semantically match your list items to your Picnic favourites and catalogue.
-- **Personalised Memory**: The AI learns from your corrections. If you manually pick a specific brand for "milk", the system remembers it and applies it automatically next time.
-- **Direct Picnic Sync**: Connect your Picnic account (DE, NL, or FR) to pull your favourite products and sync your completed list directly to your Picnic basket.
-- **Collective Household Shopping**: Built on Firebase, allowing family members or roommates to manage and view the shopping list together in real-time. Stop guessing what is in the fridge—let everyone add their missing items as they run out.
-- **Household Management Centre**: An administrative interface where the first user (Admin) can manage account access and configure the shared Picnic connection.
+* **Natural Language Shopping List**: Simply type what you need (e.g., "Bananas", "Bread", "Oat Milk"). The AI handles the interpretation.
+* **AI-Powered Product Matching**: Utilises **Google Gemini** to semantically match your list items to your Picnic favourites and the wider catalogue.
+* **Personalised Memory**: The AI learns from your choices. If you manually select a specific brand of milk, the system remembers and prioritises it for future lists.
+* **Direct Picnic Sync**: Connect your Picnic account to pull your personal favourites and sync your completed list directly to your Picnic basket.
+* **Collaborative Shopping**: Built on Firebase, allowing all members of a household to manage the list in real-time. No more "did anyone buy eggs?" – the list is always live and synced.
+* **Management Centre**: An administrative interface where the first user (Admin) manages account access and configures the shared Picnic connection.
 
-## 👥 User Roles & Household Setup
-
-This app follows a "First-In, Admin" architectural pattern designed for private household security:
-
-1.  **The Administrator**: The very first person to create an account via Google Login is automatically assigned the **Admin** role.
-2.  **Picnic Connection**: Only the Admin has the authority to enter and save the shared Picnic login credentials. Once saved, these credentials power the catalogue matching for the entire household.
-3.  **Family Invitations**: To keep your list private, the app is restricted by default. The Admin must explicitly add the email addresses of family members or housemates in the **Management Centre** to grant them access.
-4.  **Shared List**: Once invited, all members see the same real-time list, AI matches, and memory, making grocery shopping a truly collaborative effort.
+---
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Styling**: [Tailwind CSS 4.0](https://tailwindcss.com/)
-- **Animations**: [Motion](https://motion.dev/)
-- **Backend**: [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/)
-- **Database & Auth**: [Firebase](https://firebase.google.com/) (Firestore & Authentication)
-- **AI Engine**: [Google Gemini Pro/Flash](https://ai.google.dev/)
-- **API Integration**: [picnic-api](https://www.npmjs.com/package/picnic-api)
+* **Frontend**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/) + [Tailwind CSS 4.0](https://tailwindcss.com/)
+* **Backend**: [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/) (Running via [tsx](https://www.google.com/search?q=https://tsx.is/))
+* **Process Management**: [PM2](https://pm2.keymetrics.io/)
+* **AI Engine**: [Google Gemini 1.5 Pro/Flash](https://ai.google.dev/)
+* **Database & Auth**: [Firebase](https://firebase.google.com/) (Firestore & Auth)
 
-## 🚀 Getting Started
+## 🖥️ Hardware Requirements
 
-### Prerequisites
+For a stable production environment, particularly when running the build process on the same machine, the following specifications are recommended:
 
-- Node.js (v18 or higher)
-- A Firebase Project
-- A Google AI Studio API Key (for Gemini)
-- A Picnic Account
+| Resource | Minimum Requirements | Recommended |
+| --- | --- | --- |
+| **CPU** | 1 Core | 2 Cores |
+| **Memory** | 1 GB (with 1 GB Swap) | 2 GB (with 2 GB Swap) |
+| **Disk** | 4 GB | 8 GB |
 
-### Installation
+> [!NOTE]
+> **A note on Memory**: While the application runs efficiently on 1 GB of RAM, the `npm run build` process for the frontend is memory-intensive. If you are on the minimum requirements, ensure you have **Swap Space** enabled to prevent the build from crashing.
 
-1.  **Clone the repository**:
-    ```bash
-    git clone <your-repo-url>
-    cd picnic-list-architect
-    ```
+---
 
-2.  **Install dependencies**:
-    ```bash
-    npm install
-    ```
+## 💻 Local Development
 
-3.  **Environment Setup**:
-    Create a `.env` file in the root directory and add the following variables:
-    ```env
-    GEMINI_API_KEY=your_gemini_api_key
-    # Firebase Client Config (from Firebase Console)
-    VITE_FIREBASE_API_KEY=...
-    VITE_FIREBASE_AUTH_DOMAIN=...
-    VITE_FIREBASE_PROJECT_ID=...
-    VITE_FIREBASE_STORAGE_BUCKET=...
-    VITE_FIREBASE_MESSAGING_SENDER_ID=...
-    VITE_FIREBASE_APP_ID=...
-    VITE_FIREBASE_DATABASE_ID=(default)
-    ```
+### 1. Prerequisites
 
-4.  **Firebase Configuration**:
-    - The app uses environment variables for Firebase initialization. You can find these values in your Firebase Console under Project Settings > General > Your apps. Add them to your `.env` file as shown above.
-    - **Authorized Domains**: To enable Google Login in production, you MUST add your deployment domain (e.g., `ais-pre-....run.app` or `yourdomain.com`) to the **Authorized Domains** list in the Firebase Console under **Authentication > Settings > Authorized domains**. 
-      > **Important**: If the domain is not authorized, OAuth operations (like `signInWithPopup` or `signInWithRedirect`) will fail with an error. Adding your domain to the authorized domains list ensures these methods work correctly.
+* Node.js (v20 or higher recommended)
+* A Google AI Studio API Key (for Gemini)
+* A Firebase Project
 
-5.  **Run the application**:
-    ```bash
-    npm run dev
-    ```
-    The app will be available at `http://localhost:3000`.
+### 2. Installation
 
-## 🌐 Production Deployment
+```bash
+git clone <your-repo-url>
+cd matchie
+npm install
 
-For a stable production environment on your own server (e.g., Ubuntu VPS), it is highly recommended to use a process manager like **PM2**.
+```
 
-### 1. Install PM2 Globally
-Yes, installing PM2 globally allows it to manage and monitor processes across your entire system.
+### 3. Environment Setup
+
+Create a `.env` file in the root directory:
+
+```env
+# Backend
+GEMINI_API_KEY=your_key_here
+
+# Frontend (Firebase Config)
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_AUTH_DOMAIN=...
+VITE_FIREBASE_PROJECT_ID=...
+VITE_FIREBASE_STORAGE_BUCKET=...
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_APP_ID=...
+
+```
+
+### 4. Run Development Servers
+
+Start both the Vite frontend and the Express backend:
+
+```bash
+npm run dev
+
+```
+
+---
+
+## 🌐 Production Deployment (Server/LXC)
+
+When deploying to a production server (e.g., a Debian LXC on Proxmox), follow these steps for a stable, high-performance setup.
+
+### 1. Global Prerequisites
+
+Install **PM2** globally to manage your processes and ensure they restart after a reboot.
+
 ```bash
 sudo npm install -g pm2
+
 ```
 
-### 2. Build for Production
-First, generate the optimized frontend assets:
+### 2. Frontend Build (The RAM Trick)
+
+Vite builds can be memory-intensive. If your server/container has limited RAM (e.g., 2GB or less), the build might crash. Use the following command to increase the memory limit for the build process:
+
 ```bash
-npm run build
+# Force Node to use up to 4GB RAM for the build
+NODE_OPTIONS="--max-old-space-size=4096" npm run build
+
 ```
 
-### 3. Start with PM2
-Launch the server using PM2. This will ensure your app automatically restarts if it crashes or if the server reboots.
-```bash
-pm2 start npm --name "matchie" -- start
-```
+This generates the optimised files in the `/dist` folder.
 
-### 4. Monitor & Logs
-- **Check status**: `pm2 status`
-- **View logs**: `pm2 logs matchie`
-- **Restart**: `pm2 restart matchie`
-- **Stop**: `pm2 stop matchie`
+### 3. Backend Management with PM2
 
-### 5. (Optional) Run on Startup
-To make PM2 start your app automatically after a server reboot:
+We use `tsx` to run the TypeScript backend directly in production for flexibility. To keep the backend running 24/7:
+
 ```bash
+# Start the backend and name the process
+pm2 start "npx tsx server/server.ts" --name matchie-backend
+
+# Ensure it starts on system boot
 pm2 startup
 pm2 save
+
 ```
 
-## 🧠 How it Works
+### 4. Nginx Reverse Proxy
 
-### The Matching Engine
-When you add an item to the list, the system:
-1. Checks the **Local Memory** (Firestore) for existing mappings for that term.
-2. If no exact match is found, it queries **Gemini AI** with a curated list of your Picnic Favourites and the search term.
-3. Gemini returns the most likely product or a selection of "best fit" candidates for you to choose from.
+To serve the frontend and route API calls to the backend, an Nginx configuration is required. Create a new site config (e.g., `/etc/nginx/sites-available/matchie`):
 
-### The Memory Manager
-Every time you manually select a product for a term, an entry is created in a "Memory" collection. This correction is fed back into Gemini's prompt as context (Few-Shot Prompting), ensuring the AI adapts to your household's specific preferences over time.
+```nginx
+server {
+    listen 80;
+    server_name your-ip-or-domain;
 
-## 🔒 Security
+    # Frontend: Serve the built static files
+    root /var/www/matchie/dist;
+    index index.html;
 
-- **Authentication**: Secured by Firebase Auth. Only invited users can access the system.
-- **Data Privacy**: Picnic credentials (username/password) are **never stored** in the database. They are only used to obtain a temporary session token from Picnic.
-- **Firestore Rules**: Strict security rules ensure that users can only access their own lists and memory data.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Backend: Proxy /api requests to the Express server
+    location /api {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+
+```
+
+*After saving, enable the config: `ln -s /etc/nginx/sites-available/matchie /etc/nginx/sites-enabled/` and restart Nginx.*
+
+---
+
+## ☁️ Remote Access & Networking (Add-on)
+
+If your server is behind a firewall or home router and you want to access Matchie from anywhere without opening ports, **Tailscale** is the recommended solution.
+
+### Tailscale Funnel (Public Access)
+
+To make your project available to the public internet via a secure URL (e.g., `https://matchie.ts.net`), you can use Tailscale Funnel:
+
+1. **Install Tailscale** on your server.
+2. **Serve the local port**:
+```bash
+tailscale serve http://localhost:80
+
+```
+
+
+3. **Activate the Funnel**:
+```bash
+tailscale funnel 443 on
+
+```
+
+---
+
+## 🔒 Security & Privacy
+
+* **Authentication**: Secured by Firebase Auth. Only invited emails added by the Admin can access the household list.
+* **Picnic Credentials**: Picnic login details are **never stored** in the database. They are only used to fetch a temporary session token.
+* **Environment Variables**: Always keep your `.env` file out of version control (it is included in `.gitignore`).
+
+*Note: Ensure your Firebase "Authorized Domains" includes your Tailscale URL to allow Google Login to function.*
+
+---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.

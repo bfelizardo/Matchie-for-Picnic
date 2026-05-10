@@ -1,0 +1,17 @@
+{
+  "name": "Matchie",
+  "short_name": "Matchie",
+  "description": "AI-powered shopping assistant for families.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f43f5e",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
