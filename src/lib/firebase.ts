@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { getFirestore, doc, getDocFromServer, enableIndexedDbPersistence } from 'firebase/firestore';
 
 
 // Allow environment variables to override if present
@@ -15,11 +15,29 @@ const firebaseConfig = {
 
 const databaseId = import.meta.env.VITE_FIREBASE_DATABASE_ID || '(default)';
 
-console.log("[Firebase] Initializing with project:", firebaseConfig.projectId);
+console.log("[Firebase] Initializing Matchie with project:", firebaseConfig.projectId);
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, databaseId);
 export const auth = getAuth(app);
+
+// Enable Auth Persistence
+setPersistence(auth, browserLocalPersistence).catch((err) => {
+  console.error("[Firebase] Auth persistence error:", err);
+});
+
+// Enable Firestore Persistence for offline/instant loading
+if (typeof window !== 'undefined') {
+  enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code === 'failed-precondition') {
+      // Multiple tabs open, persistence can only be enabled in one tab at a time.
+      console.warn("[Firebase] Persistence failed: Multiple tabs open");
+    } else if (err.code === 'unimplemented') {
+      // The current browser does not support all of the features required to enable persistence
+      console.warn("[Firebase] Persistence failed: Browser not supported");
+    }
+  });
+}
 
 // Simple connection check
 async function testConnection() {

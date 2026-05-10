@@ -196,7 +196,7 @@ export default function App() {
   }, [user]);
 
   useEffect(() => {
-    if (!user || loading || isAccessDenied || !currentUserRole) return;
+    if (!user) return;
     const unsub = onSnapshot(doc(db, 'config', 'picnic'), (docSnap) => {
       if (docSnap.exists() && docSnap.data().picnicToken) {
         const data = docSnap.data();
@@ -213,15 +213,18 @@ export default function App() {
         localStorage.removeItem('picnicEmail');
       }
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'config/picnic');
+      // Avoid reporting errors before access check completes
+      if (error.code !== 'permission-denied') {
+        handleFirestoreError(error, OperationType.GET, 'config/picnic');
+      }
     });
     return unsub;
-  }, [user, isAccessDenied, loading, currentUserRole]);
+  }, [user]);
 
   useEffect(() => {
-    if (!user || loading || isAccessDenied || !currentUserRole) return;
+    if (!user) return;
     const q = query(collection(db, 'items'), orderBy('createdAt', 'desc'));
-    return onSnapshot(q, (snapshot) => {
+    const unsub = onSnapshot(q, (snapshot) => {
       const newItems = snapshot.docs.map(doc => {
         const data = doc.data();
         let matchedProduct = data.matchedProduct;
@@ -247,9 +250,12 @@ export default function App() {
       }) as ShoppingListItem[];
       setItems(newItems);
     }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'items');
+      if (error.code !== 'permission-denied') {
+        handleFirestoreError(error, OperationType.LIST, 'items');
+      }
     });
-  }, [user, isAccessDenied, loading, currentUserRole]);
+    return unsub;
+  }, [user]);
 
   useEffect(() => {
     if (picnicToken) {
@@ -344,16 +350,24 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!user || loading || isAccessDenied || !currentUserRole) return;
+    if (!user) {
+      setPreferences({});
+      return;
+    }
     const prefRef = doc(db, 'shared_preferences', 'matching');
-    return onSnapshot(prefRef, (doc) => {
+    const unsub = onSnapshot(prefRef, (doc) => {
       if (doc.exists()) {
         setPreferences(doc.data().pastMatches || {});
+      } else {
+        setPreferences({});
       }
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'shared_preferences/matching');
+      if (error.code !== 'permission-denied') {
+        handleFirestoreError(error, OperationType.GET, 'shared_preferences/matching');
+      }
     });
-  }, [user, loading, isAccessDenied, currentUserRole]);
+    return unsub;
+  }, [user]);
 
   const isMatchingRef = React.useRef(false);
 
@@ -783,7 +797,8 @@ export default function App() {
     }
   };
 
-  if (loading) {
+  // Only block with a full-screen loader if we have NO data and are still checking access
+  if (loading && items.length === 0 && !isAccessDenied) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50">
         <Loader2 className="w-8 h-8 animate-spin text-rose-600" />
