@@ -18,6 +18,21 @@
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "32x32",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "16x16",
+      "type": "image/svg+xml"
     }
   ]
 }

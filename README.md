@@ -13,6 +13,7 @@
 * **AI-Powered Product Matching**: Utilises **Google Gemini** to semantically match your list items to your Picnic favourites and the wider catalogue.
 * **Personalised Memory**: The AI learns from your choices. If you manually select a specific brand of milk, the system remembers and prioritises it for future lists.
 * **Direct Picnic Sync**: Connect your Picnic account to pull your personal favourites and sync your completed list directly to your Picnic basket.
+* **Offline-First PWA**: Fully functional as a Progressive Web App. Firestore's persistent cache ensures your list is available even in the deepest supermarket aisles with no signal.
 * **Collaborative Shopping**: Built on Firebase, allowing all members of a household to manage the list in real-time. No more "did anyone buy eggs?" – the list is always live and synced.
 * **Management Centre**: An administrative interface where the first user (Admin) manages account access and configures the shared Picnic connection.
 
@@ -67,12 +68,14 @@ Create a `.env` file in the root directory:
 GEMINI_API_KEY=your_key_here
 
 # Frontend (Firebase Config)
+# Use your Firebase Project Settings values here
 VITE_FIREBASE_API_KEY=...
 VITE_FIREBASE_AUTH_DOMAIN=...
 VITE_FIREBASE_PROJECT_ID=...
 VITE_FIREBASE_STORAGE_BUCKET=...
 VITE_FIREBASE_MESSAGING_SENDER_ID=...
 VITE_FIREBASE_APP_ID=...
+VITE_FIREBASE_DATABASE_ID=(default)
 
 ```
 

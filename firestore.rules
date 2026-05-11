@@ -1,79 +1,91 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Default deny
     match /{document=**} {
-      allow read, write: if false; // Catch-all deny
+      allow read, write: if false;
     }
 
     // --- Helpers ---
-    function isSignedIn() { return request.auth != null; }
-    function isVerifiedEmail() { return isSignedIn() && request.auth.token.email_verified == true; }
-    function isAdmin() { 
-      return isVerifiedEmail() && exists(/databases/$(database)/documents/app_users/$(request.auth.token.email)) 
-        && get(/databases/$(database)/documents/app_users/$(request.auth.token.email)).data.role == 'admin'; 
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
     }
-    function isAllowedUser() {
-      return isVerifiedEmail() && exists(/databases/$(database)/documents/app_users/$(request.auth.token.email));
-    }
-    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
-    function incoming() { return request.resource.data; }
-    function existing() { return resource.data; }
 
-    // --- Bootstrapping logic ---
-    // If there is NO config/setup document, the first user can become an admin.
+    function isVerifiedEmail() {
+      return isSignedIn();
+    }
+
+    function getUserEmail() {
+      return request.auth.token.email.lower();
+    }
+
+    function isAdmin() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/app_users/$(request.auth.token.email.lower())) &&
+             get(/databases/$(database)/documents/app_users/$(request.auth.token.email.lower())).data.role == 'admin';
+    }
+
+    function isMember() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/app_users/$(request.auth.token.email.lower()));
+    }
+
     function isFirstSetup() {
       return !exists(/databases/$(database)/documents/config/setup);
     }
 
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // --- Validation Helpers ---
+
+    function isValidAppUser(data) {
+      return data.role in ['admin', 'member'] && 
+             (data.keys().hasAll(['role']) || data.keys().size() > 0);
+    }
+
+    function isValidItem(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100
+             && data.status in ["unmatched", "matching", "matched"]
+             && data.count is number && data.count > 0
+             && data.addedBy == getUserEmail();
+    }
+
     // --- Collections ---
 
-    // 1. App Users (Access Control)
     match /app_users/{emailId} {
-      function isValidAppUser(data) {
-        return data.email is string && data.email.size() <= 128
-          && data.role in ['admin', 'member'];
-      }
-      allow read: if isAllowedUser() || isFirstSetup() || (isSignedIn() && request.auth.token.email == emailId);
-      
-      // Allow creation if it's the first setup, OR if caller is admin
-      allow create: if isVerifiedEmail() && isValidAppUser(incoming()) && (
-        isFirstSetup() || isAdmin()
-      );
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
+      allow create: if isVerifiedEmail() && isValidAppUser(incoming()) && (isFirstSetup() || isAdmin());
       allow update: if isVerifiedEmail() && isValidAppUser(incoming()) && isAdmin() &&
                        incoming().diff(existing()).affectedKeys().hasOnly(['role', 'name']);
       allow delete: if isAdmin();
     }
 
-    // 2. Global Config (Picnic Token, Setup Flag)
     match /config/{configDoc} {
-      allow read: if isSignedIn() || isFirstSetup();
-      allow create: if isVerifiedEmail() && (isFirstSetup() || isAdmin());
-      allow update: if isVerifiedEmail() && (isFirstSetup() || isAdmin());
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && (isFirstSetup() || isAdmin());
+      allow update: if isSignedIn() && (isFirstSetup() || isAdmin());
       allow delete: if isAdmin();
     }
 
-    // 3. Shared Items List
     match /items/{itemId} {
-      function isValidItem(data) {
-        return data.name is string && data.name.size() > 0 && data.name.size() < 100
-             && data.status in ["pending", "matched", "unmatched", "in_basket"]
-             && data.count is number && data.count > 0;
-      }
-      allow read: if isAllowedUser();
-      allow create: if isAllowedUser() && isValidItem(incoming());
-      allow update: if isAllowedUser() && isValidItem(incoming());
-      allow delete: if isAllowedUser();
+      allow read: if isMember();
+      allow create: if isMember() && isValidItem(incoming());
+      allow update: if isMember() && (
+        // Only allow updating specific fields
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'count', 'matchedProduct', 'matchError', 'updatedAt'])
+      );
+      allow delete: if isMember();
     }
 
-    // 4. User Preferences
-    match /users/{userId}/preferences/{prefDocId} {
-      allow read: if isAllowedUser() && isOwner(userId);
-      allow write: if isAllowedUser() && isOwner(userId);
+    match /shared_preferences/{prefId} {
+      allow read: if isMember();
+      allow write: if isMember();
     }
-    
-    // 5. Shared Preferences (for Memory Manager)
-    match /shared_preferences/{prefDocId} {
-      allow read, write: if isAllowedUser();
+
+    match /system/{id} {
+      allow read: if isSignedIn();
     }
   }
 }

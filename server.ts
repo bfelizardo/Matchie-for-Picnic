@@ -1,6 +1,11 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
+
 // @ts-ignore - picnic-api uses module.exports and might cause type issues in some ESM setups
 import PicnicClient from "picnic-api";
 import { JSONPath } from 'jsonpath-plus';

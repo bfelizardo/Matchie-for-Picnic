@@ -168,24 +168,32 @@ export default function App() {
           // Check if bootstrapping is needed or if this is the requested special admin
           const setupSnap = await getDoc(setupRef);
           if (!setupSnap.exists() || email === 'bruno.felizardoantunes@gmail.com') {
-            await setDoc(userRef, {
-              email,
-              role: 'admin',
-              addedAt: serverTimestamp(),
-              addedBy: 'system_bootstrap'
-            });
-            if (!setupSnap.exists()) {
-              await setDoc(setupRef, { setupComplete: true });
+            try {
+              await setDoc(userRef, {
+                email,
+                role: 'admin',
+                addedAt: serverTimestamp(),
+                addedBy: 'system_bootstrap'
+              });
+              if (!setupSnap.exists()) {
+                await setDoc(setupRef, { setupComplete: true });
+              }
+              setCurrentUserRole('admin');
+              setIsAccessDenied(false);
+            } catch (writeErr) {
+              handleFirestoreError(writeErr, OperationType.WRITE, 'app_users/setup');
+              setIsAccessDenied(true);
             }
-            setCurrentUserRole('admin');
-            setIsAccessDenied(false);
           } else {
             setCurrentUserRole(null);
             setIsAccessDenied(true);
           }
         }
       } catch (e) {
-        handleFirestoreError(e, OperationType.GET, 'access_check');
+        // Only report if it's not our internally handled write error
+        if (!isAccessDenied) {
+          handleFirestoreError(e, OperationType.GET, 'access_check');
+        }
         setIsAccessDenied(true);
       } finally {
         setLoading(false);
@@ -962,7 +970,7 @@ export default function App() {
       </nav>
 
       {/* Main Workspace */}
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 p-4 lg:p-8 max-w-[1440px] mx-auto w-full pb-32 lg:pb-8 h-full overflow-y-auto lg:overflow-hidden">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 p-4 lg:p-8 max-w-[1440px] mx-auto w-full pb-56 lg:pb-8 h-full overflow-y-auto lg:overflow-hidden">
         {/* Left: Shared List Column */}
         <section className="order-1 lg:col-span-4 flex flex-col gap-4">
           <div className="flex items-center justify-between px-1">
@@ -1053,7 +1061,7 @@ export default function App() {
         <section className="order-2 lg:col-span-8 flex flex-col gap-4">
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-1.5 lg:gap-4 overflow-x-auto pb-2 sm:pb-0 scrollbar-none ring-1 ring-slate-200 lg:ring-0 p-1 lg:p-0 rounded-2xl bg-white lg:bg-transparent">
+            <div className="flex items-center gap-1.5 lg:gap-4 overflow-x-auto scrollbar-none">
               <button 
                 onClick={() => setView('list')}
                 className={cn(
@@ -1359,7 +1367,7 @@ export default function App() {
                 country: country
               }, { merge: true });
             } catch (e) {
-              console.error("Failed to share Picnic connection", e);
+              handleFirestoreError(e, OperationType.WRITE, 'config/picnic');
             }
           }}
           onDisconnect={async () => {
@@ -1369,7 +1377,7 @@ export default function App() {
             try {
               await deleteDoc(doc(db, 'config', 'picnic'));
             } catch (e) {
-              // Ignore
+              handleFirestoreError(e, OperationType.DELETE, 'config/picnic');
             }
             setFavourites([]);
           }}
