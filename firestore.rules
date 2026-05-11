@@ -46,9 +46,9 @@ service cloud.firestore {
 
     function isValidItem(data) {
       return data.name is string && data.name.size() > 0 && data.name.size() < 100
-             && data.status in ["unmatched", "matching", "matched"]
-             && data.count is number && data.count > 0
-             && data.addedBy == getUserEmail();
+             && data.status in ["pending", "unmatched", "matching", "matched", "in_basket"]
+             && data.count is number && data.count >= 0
+             && (data.addedBy == request.auth.uid || data.addedBy == getUserEmail());
     }
 
     // --- Collections ---
@@ -74,7 +74,7 @@ service cloud.firestore {
       allow create: if isMember() && isValidItem(incoming());
       allow update: if isMember() && (
         // Only allow updating specific fields
-        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'count', 'matchedProduct', 'matchError', 'updatedAt'])
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'count', 'matchedProduct', 'candidates', 'matchError', 'updatedAt', 'name'])
       );
       allow delete: if isMember();
     }
